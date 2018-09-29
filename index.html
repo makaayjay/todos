@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <style>
+        .del{
+            text-decoration: line-through;
+            color: #8E8E93;
+        }
+
+    </style>
+</head>
+<body>
+<div id="app">
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">
+                    makaayjay
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <div class="panel  panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">今天还有{{count}}件事没做</h3>
+                        <input class="form-control" v-model="newTodo" @keyup.enter="add">
+                    </div>
+                    <div class="panel-body">
+                        <ul class="list-group" v-if="isEmpty">
+                            <li class="list-group-item" :class="{del:item.isSelect}" v-for="(item,index) in filterTodos" @dblclick="remembem(item)" >
+                                <span  v-show="cur!=item" ><input type="checkbox" v-model="item.isSelect">{{item.title}}</span>
+                                <input v-show="cur==item" v-model="item.title" @keyup.enter="cur=''" @blur="cur=''">
+                                <span class="glyphicon glyphicon-remove pull-right" @click="remove(item)" ></span>
+                            </li>
+                        </ul>
+                        <div v-else><h3>亲，没数据哦</h3></div>
+                    </div>
+                    <div class="panel-footer">
+                        <input type="checkbox"  v-model="checkedAll">全选
+                        <button class="button" @click="removeAll">删除</button>
+                        <ul class="nav nav-pills">
+                            <li role="presentation" :class="{active:hash==='all'}"><a href="#/all" >全部事件</a></li>
+                            <li role="presentation"  :class="{active:hash==='finish'}"><a href="#/finish">已完成事件</a></li>
+                            <li role="presentation" :class="{active:hash==='unfinish'}"><a href="#/unfinish" >未完成件</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const vm=new Vue({
+        el:'#app',
+        data:{
+            todos:[
+                {
+                    title:'睡觉',
+                    isSelect:false,
+                },
+                {
+                    title:'吃饭',
+                    isSelect:true,
+                },
+                {
+                    title:'学习',
+                    isSelect:false,
+                },
+            ],
+            newTodo:'',
+            change:false,
+            cur:'',
+            hash:'',
+
+
+        },
+        created(){
+            this.todos=JSON.parse(localStorage.getItem("data"));
+            this.hash="all"
+            window.addEventListener("hashchange",()=>{
+                this.hash=window.location.hash.slice(2)
+            })
+        },
+        computed:{
+            filterTodos(){
+                if(this.hash=="all") return this.todos;
+                if(this.hash=="finish") return this.todos.filter(item=>item.isSelect);
+                if(this.hash=="unfinish")return this.todos.filter(item=>item.isSelect==false)
+            },
+            isEmpty(){
+                if (this.filterTodos==""){
+                    return false
+                }else{
+                    return true
+                }
+            },
+            count(){
+                return this.todos.filter(item=>item.isSelect==false).length
+             },
+            checkedAll:{
+              get(){
+              return this.todos.every(item=>item.isSelect)
+                },
+                set(val){
+                  this.todos.forEach(item=>item.isSelect=val)
+                }
+            }
+        },
+
+        watch:{
+            todos:{//默认只有一层数据监控
+                handler(){//深度监控
+                    localStorage.setItem("data",JSON.stringify(this.todos))//localStorage默认存的是字符串
+                },deep:true
+            }
+        },
+        methods:{
+            add(){
+                if(this.newTodo!="")
+                this.todos.push({title:this.newTodo,isSelect:false});
+                this.newTodo=""
+            },
+            remove(el){
+               this.todos=this.todos.filter(item=>item!=el)
+            },
+
+            remembem(el){
+                this.cur=el;
+            },
+            removeAll(){
+                if (this.checkedAll==true){
+                    this.todos=[]
+                }else{
+                    this.todos=this.todos.filter(item=>item.isSelect==false)//过滤
+                }
+
+            }
+        }
+    })
+</script>
+</body>
+</html>
